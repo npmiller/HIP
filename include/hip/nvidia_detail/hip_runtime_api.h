@@ -1561,6 +1561,15 @@ inline static hipError_t hipDeviceGetAttribute(int* pi, hipDeviceAttribute_t att
         case hipDeviceAttributeCooperativeMultiDeviceLaunch:
             cdattr = cudaDevAttrCooperativeMultiDeviceLaunch;
             break;
+        case hipDeviceAttributeManagedMemory:
+          cdattr = cudaDevAttrManagedMemory;
+            break;
+        case hipDeviceAttributePageableMemoryAccess:
+          cdattr = cudaDevAttrPageableMemoryAccess;
+            break;
+        case hipDeviceAttributeConcurrentManagedAccess:
+          cdattr = cudaDevAttrConcurrentManagedAccess;
+          break;
         default:
             return hipCUDAErrorTohipError(cudaErrorInvalidValue);
     }
@@ -1629,6 +1638,12 @@ inline static hipError_t hipPointerGetAttributes(hipPointerAttribute_t* attribut
 #else
         unsigned memType = cPA.memoryType; // No auto because cuda 10.2 doesnt force c++11
 #endif
+        attributes->device = cPA.device;
+        attributes->devicePointer = cPA.devicePointer;
+        attributes->hostPointer = cPA.hostPointer;
+        attributes->isManaged = 0;
+        attributes->allocationFlags = 0;
+
         switch (memType) {
             case cudaMemoryTypeDevice:
                 attributes->memoryType = hipMemoryTypeDevice;
@@ -1636,14 +1651,13 @@ inline static hipError_t hipPointerGetAttributes(hipPointerAttribute_t* attribut
             case cudaMemoryTypeHost:
                 attributes->memoryType = hipMemoryTypeHost;
                 break;
+            case cudaMemoryTypeManaged:
+                attributes->memoryType = hipMemoryTypeDevice;
+                attributes->isManaged = 1;
+                break;
             default:
                 return hipErrorUnknown;
         }
-        attributes->device = cPA.device;
-        attributes->devicePointer = cPA.devicePointer;
-        attributes->hostPointer = cPA.hostPointer;
-        attributes->isManaged = 0;
-        attributes->allocationFlags = 0;
     }
     return err;
 }
